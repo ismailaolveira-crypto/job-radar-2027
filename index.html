@@ -290,12 +290,27 @@ function kindMatchMode(r,k){
   return r.kind!=="社招";
 }
 function kindMatch(r){return kindMatchMode(r,fKind);}
-function targetFit(r){return hasAnyTag(r,["销售/BD","市场/增长","供应链","解决方案/FDE","产品","AI产品","策略产品","决策支持","算法/ML","数据科学","数据挖掘"])||/数据|产品|策略|商业分析|经营分析|战略|数字化|算法|机器学习|ai|大模型|市场营销|市场拓展|品牌营销|增长运营|渠道|大客户|客户经理|商务拓展|业务拓展|bd|海外销售|出海|解决方案|售前|供应链|采购|sourcing|procurement|field application|field engineer|fde|fae/i.test(r.t+" "+(r.jd||""));}
+function targetFit(r){return ["pass","watch"].includes(r.fit)||hasAnyTag(r,["销售/BD","市场/增长","供应链","解决方案/FDE","产品","AI产品","策略产品","决策支持","算法/ML","数据科学","数据挖掘"])||/数据|产品|策略|商业分析|经营分析|战略|数字化|算法|机器学习|ai|大模型|市场营销|市场拓展|品牌营销|增长运营|渠道|大客户|客户经理|商务拓展|业务拓展|bd|海外销售|出海|解决方案|售前|供应链|采购|sourcing|procurement|field application|field engineer|fde|fae/i.test(r.t+" "+(r.jd||""));}
 function manufacturingFit(r){return targetFit(r)&&!/机械|电气|操作|技工|工艺|设备|维修|生产|质检|质量|仓储|医药代表|电话销售|电销|地推|催收/.test(r.t);}
 function isHunan(r){return /湖南|长沙|株洲|湘潭/.test((r.loc||"")+" "+(r.t||"")+" "+(r.jd||"")+" "+(r.src||""));}
 function isConsumerCommerce(r){return r.ind==="消费/零售/快消"||/快消|消费|零售|电商|品牌|市场|用户增长|商业分析|产品运营|供应链|欧莱雅|宝洁|联合利华|安踏|李宁|名创|泡泡玛特|得物/.test((r.c||"")+" "+(r.t||"")+" "+(r.jd||""));}
 function isInternet(r){return r.ind==="互联网/软件"||["腾讯","字节跳动","网易","京东","百度","快手","阿里","美团","拼多多"].includes(r.c);}
 function primaryRole(r){
+  const mapped={
+    product_strategy:"product",
+    data_analysis:"data",
+    business_strategy:"product",
+    robotics_data:"data",
+    commercial_gtm:"commercial",
+    market_growth:"market",
+    supply_chain:"supply",
+    solution_fde:"solution",
+    algo_research:"algo",
+    engineering_hardware:"pure_tech",
+    functional:"pure_tech",
+    source_monitor:"source_monitor"
+  };
+  if(r.role_code&&mapped[r.role_code])return mapped[r.role_code];
   if(hasTag(r,"销售/BD"))return "commercial";
   if(hasTag(r,"市场/增长"))return "market";
   if(hasTag(r,"供应链"))return "supply";
@@ -368,7 +383,7 @@ function predTab(r,k){const st=stOf(r.id);
   if(k==="board")return PIPELINE.has(st);
   if(k==="expired")return !r.gone&&st!=="ignored"&&expired(r);
   if(k==="quality")return !r.gone&&st!=="ignored"&&!expired(r)&&(r.lq||r.bc);
-  const base=!r.gone&&st!=="ignored"&&!r.bc&&!r.lq&&!expired(r); // 通用可见（非下线/忽略/蓝领/低质/过期）
+  const base=!r.gone&&st!=="ignored"&&!r.bc&&!r.lq&&r.fit!=="reject"&&!expired(r); // 通用可见（非下线/忽略/蓝领/低质/筛选屏蔽/过期）
   if(k==="c27")return base&&r.cyc==="2027";
   if(k==="nonnet")return base&&r.ind!=="互联网/软件"&&(r.cyc==="2027"||r.gv||r.cat==="国家平台"||r.cat==="高校");
   if(k==="advance")return base&&r.cyc==="2027"&&(r.stage==="提前批"||r.stage==="暑期实习");
